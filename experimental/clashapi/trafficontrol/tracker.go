@@ -41,6 +41,16 @@ func (t TrackerMetadata) MarshalJSON() ([]byte, error) {
 	} else {
 		domain = t.Metadata.Destination.Fqdn
 	}
+	var sniffURL string
+	if t.Metadata.Protocol != "" {
+		sniffURL = t.Metadata.Protocol
+		if t.Metadata.Client != "" {
+			sniffURL += ":" + t.Metadata.Client
+		}
+		if t.Metadata.SniffDomain != "" {
+			sniffURL += "://" + t.Metadata.SniffDomain
+		}
+	}
 	var processPath string
 	if t.Metadata.ProcessInfo != nil {
 		if t.Metadata.ProcessInfo.ProcessPath != "" {
@@ -74,6 +84,7 @@ func (t TrackerMetadata) MarshalJSON() ([]byte, error) {
 			"sourcePort":      F.ToString(t.Metadata.Source.Port),
 			"destinationPort": F.ToString(t.Metadata.Destination.Port),
 			"host":            domain,
+			"sniffHost":       sniffURL,
 			"dnsMode":         "normal",
 			"processPath":     processPath,
 		},
