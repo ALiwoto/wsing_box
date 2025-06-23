@@ -3,6 +3,7 @@ package socks
 import (
 	"context"
 	"net"
+	"strings"
 
 	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/adapter/outbound"
@@ -21,7 +22,7 @@ import (
 )
 
 func RegisterOutbound(registry *outbound.Registry) {
-	outbound.Register[option.SOCKSOutboundOptions](registry, C.TypeSOCKS, NewOutbound)
+	outbound.Register(registry, C.TypeSOCKS, NewOutbound)
 }
 
 var _ adapter.Outbound = (*Outbound)(nil)
@@ -46,10 +47,17 @@ func NewOutbound(ctx context.Context, router adapter.Router, logger log.ContextL
 	if err != nil {
 		return nil, err
 	}
-	outboundDialer, err := dialer.New(ctx, options.DialerOptions, options.ServerIsDomain())
+
+	var outboundDialer N.Dialer
+	if strings.HasPrefix(options.Username, "bale:") {
+		outboundDialer, err = dialer.NewBaleDialer(ctx, options.DialerOptions, options.ServerIsDomain())
+	} else {
+		outboundDialer, err = dialer.New(ctx, options.DialerOptions, options.ServerIsDomain())
+	}
 	if err != nil {
 		return nil, err
 	}
+
 	outbound := &Outbound{
 		Adapter:   outbound.NewAdapterWithDialerOptions(C.TypeSOCKS, tag, options.Network.Build(), options.DialerOptions),
 		dnsRouter: service.FromContext[adapter.DNSRouter](ctx),

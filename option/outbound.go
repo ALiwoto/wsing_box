@@ -76,6 +76,7 @@ type DialerOptions struct {
 	TCPFastOpen         bool                              `json:"tcp_fast_open,omitempty"`
 	TCPMultiPath        bool                              `json:"tcp_multi_path,omitempty"`
 	UDPFragment         *bool                             `json:"udp_fragment,omitempty"`
+	BaleConfig          *BaleConfiguration                `json:"bale_config,omitempty"`
 	UDPFragmentDefault  bool                              `json:"-"`
 	NetNs               string                            `json:"netns,omitempty"`
 	DomainResolver      *DomainResolveOptions             `json:"domain_resolver,omitempty"`
@@ -87,6 +88,26 @@ type DialerOptions struct {
 
 	// Deprecated: migrated to domain resolver
 	DomainStrategy DomainStrategy `json:"domain_strategy,omitempty"`
+}
+
+type BaleConfiguration struct {
+	IsInside    bool          `json:"is_inside"`
+	IsOutside   bool          `json:"is_outside"`
+	APIUrl      string        `json:"api_url"`
+	ThrottleSec int           `json:"throttle_sec"`
+	Owners      []int64       `json:"owners"`
+	Chats       []int64       `json:"chats"`
+	BotPairs    []BaleBotPair `json:"bale_bot_pairs"`
+}
+
+type BaleBotPair struct {
+	Inside  *BaleBotInfo `json:"inside"`
+	Outside *BaleBotInfo `json:"outside"`
+}
+
+type BaleBotInfo struct {
+	BotToken string `json:"bot_token"`
+	Username string `json:"username"`
 }
 
 type _DomainResolveOptions struct {

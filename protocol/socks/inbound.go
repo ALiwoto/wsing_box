@@ -20,7 +20,7 @@ import (
 )
 
 func RegisterInbound(registry *inbound.Registry) {
-	inbound.Register[option.SocksInboundOptions](registry, C.TypeSOCKS, NewInbound)
+	inbound.Register(registry, C.TypeSOCKS, NewInbound)
 }
 
 var _ adapter.TCPInjectableInbound = (*Inbound)(nil)

@@ -1,3 +1,5 @@
+github.com/ALiwoto/ssg v1.1.40 h1:eyQD7BpR2PylLnoo88G5/aiDXNpo3Qvdfj1mScAKkCk=
+github.com/ALiwoto/ssg v1.1.40/go.mod h1:977/edS++uXWeyaTA9giTWPi8QubiIkb6ij0+0tC9gU=
 filippo.io/edwards25519 v1.1.0 h1:FNf4tywRC1HmFuKW5xopWpigGjJKiJSV0Cqo0cJWDaA=
 filippo.io/edwards25519 v1.1.0/go.mod h1:BxyFTGdWcka3PhytdK4V28tE5sGfRvvvRV7EaN4VDT4=
 github.com/ajg/form v1.5.1 h1:t9c7v8JUKu/XxOGBU0yjNpaMloxGEJhUkqFRq0ibGeU=

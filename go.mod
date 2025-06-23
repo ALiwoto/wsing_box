@@ -3,6 +3,7 @@ module github.com/sagernet/sing-box
 go 1.23.1
 
 require (
+	github.com/ALiwoto/ssg v1.1.40
 	github.com/anytls/sing-anytls v0.0.8
 	github.com/caddyserver/certmagic v0.21.7
 	github.com/cloudflare/circl v1.6.0
