@@ -96,13 +96,13 @@ type BaleConfiguration struct {
 	APIUrl      string        `json:"api_url"`
 	ThrottleSec int           `json:"throttle_sec"`
 	Owners      []int64       `json:"owners"`
-	Chats       []int64       `json:"chats"`
 	BotPairs    []BaleBotPair `json:"bale_bot_pairs"`
 }
 
 type BaleBotPair struct {
 	Inside  *BaleBotInfo `json:"inside"`
 	Outside *BaleBotInfo `json:"outside"`
+	ChatIds []int64      `json:"chat_ids"`
 }
 
 type BaleBotInfo struct {

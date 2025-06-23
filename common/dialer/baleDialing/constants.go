@@ -20,9 +20,5 @@ const (
 )
 
 const (
-	baleCommandCloseConn = "endMusical"
-)
-
-const (
 	TooManyRequestStr = "Too Many Requests: retry after"
 )

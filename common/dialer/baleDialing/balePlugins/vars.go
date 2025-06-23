@@ -8,7 +8,7 @@ import (
 
 var (
 	OwnersId []int64
-	BotPairs []IdTuple
+	BotPairs []PairsMinimalInfo
 )
 
 var BaleConnectionsPool = ssg.NewSafeMap[string, net.Conn]()

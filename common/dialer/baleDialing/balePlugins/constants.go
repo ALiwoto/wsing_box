@@ -6,3 +6,7 @@ const (
 	OutsidePreData    = "S-"
 	OutsidePreCommand = "L-"
 )
+
+const (
+	BaleCommandCloseConn = "endMusical"
+)

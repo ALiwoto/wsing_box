@@ -8,7 +8,7 @@ func IsOwner(id int64) bool {
 
 func IsInsideBot(id int64) bool {
 	for i := range BotPairs {
-		if BotPairs[i][0] == id {
+		if BotPairs[i].InsideBotId == id {
 			return true
 		}
 	}
@@ -18,7 +18,7 @@ func IsInsideBot(id int64) bool {
 
 func IsOutsideBot(id int64) bool {
 	for i := range BotPairs {
-		if BotPairs[i][1] == id {
+		if BotPairs[i].OutsideBotId == id {
 			return true
 		}
 	}
@@ -28,8 +28,8 @@ func IsOutsideBot(id int64) bool {
 
 func GetInsidePair(id int64) int64 {
 	for i := range BotPairs {
-		if BotPairs[i][1] == id {
-			return BotPairs[i][0]
+		if BotPairs[i].OutsideBotId == id {
+			return BotPairs[i].InsideBotId
 		}
 	}
 
@@ -38,10 +38,24 @@ func GetInsidePair(id int64) int64 {
 
 func GetOutsidePair(id int64) int64 {
 	for i := range BotPairs {
-		if BotPairs[i][1] == id {
-			return BotPairs[i][1]
+		if BotPairs[i].InsideBotId == id {
+			return BotPairs[i].OutsideBotId
 		}
 	}
 
 	return 0
+}
+
+func GetMyChats(botId int64) []int64 {
+	for i := range BotPairs {
+		if BotPairs[i].InsideBotId == botId || BotPairs[i].OutsideBotId == botId {
+			return BotPairs[i].ChatIds
+		}
+	}
+
+	return []int64{}
+}
+
+func IsInCorrectChat(botId, chatId int64) bool {
+	return slices.Contains(GetMyChats(botId), chatId)
 }

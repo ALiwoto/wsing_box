@@ -225,7 +225,9 @@ func (c *BaleConn) Close() error {
 		return errors.New("invalid baleConn: make sure one of the flags is set")
 	}
 
-	err := c.getRandomBot().SendData(preCmd + c.ConnectionId + " " + baleCommandCloseConn)
+	err := c.getRandomBot().SendData(
+		preCmd + c.ConnectionId + " " + balePlugins.BaleCommandCloseConn,
+	)
 	if err != nil {
 		return err
 	}
@@ -304,9 +306,10 @@ func (c *BaleBotContainer) SendData(data string) error {
 	defer c.lock.Unlock()
 
 	triesCount := 0
+	chats := c.GetMyChats()
 	for c.Bot != nil {
 		_, err := c.Bot.SendMessage(
-			c.BaleConfig.Chats[rand.Intn(len(c.BaleConfig.Chats))],
+			chats[rand.Intn(len(chats))],
 			data,
 			&gotgbot.SendMessageOpts{},
 		)
@@ -336,6 +339,10 @@ func (c *BaleBotContainer) SendData(data string) error {
 	}
 
 	return errors.New("no bot instance to send data")
+}
+
+func (c *BaleBotContainer) GetMyChats() []int64 {
+	return balePlugins.GetMyChats(c.Bot.Id)
 }
 
 //---------------------------------------------------------

@@ -46,9 +46,10 @@ func NewBaleDialerContainer(opts option.DialerOptions) (*BaleDialerContainer, er
 
 		balePlugins.BotPairs = append(
 			balePlugins.BotPairs,
-			balePlugins.IdTuple{
-				ssg.ToInt64(strings.Split(currentConfig.Inside.BotToken, ":")[0]),
-				ssg.ToInt64(strings.Split(currentConfig.Outside.BotToken, ":")[0]),
+			balePlugins.PairsMinimalInfo{
+				InsideBotId:  ssg.ToInt64(strings.Split(currentConfig.Inside.BotToken, ":")[0]),
+				OutsideBotId: ssg.ToInt64(strings.Split(currentConfig.Outside.BotToken, ":")[0]),
+				ChatIds:      currentConfig.ChatIds,
 			},
 		)
 

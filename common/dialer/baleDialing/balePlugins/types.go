@@ -1,5 +1,7 @@
 package balePlugins
 
-
-type IdTuple = [2]int64
-
+type PairsMinimalInfo struct {
+	InsideBotId  int64
+	OutsideBotId int64
+	ChatIds      []int64
+}

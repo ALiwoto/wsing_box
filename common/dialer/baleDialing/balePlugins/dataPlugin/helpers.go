@@ -7,4 +7,5 @@ import (
 
 func LoadHandlers(d *ext.Dispatcher, t []rune) {
 	d.AddHandler(handlers.NewMessage(dataMessageFilter, dataMessageHandler))
+	d.AddHandler(handlers.NewMessage(commandMessageFilter, commandMessageHandler))
 }
