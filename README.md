@@ -2,6 +2,10 @@
 
 The universal proxy platform.
 
+This is a customized version of sing-box for my personal usage, it might contain undocumented features (or bugs) which do not exist in the official version.
+
+I will not hold any responsibility in instability of this version.
+
 [![Packaging status](https://repology.org/badge/vertical-allrepos/sing-box.svg)](https://repology.org/project/sing-box/versions)
 
 ## Documentation
