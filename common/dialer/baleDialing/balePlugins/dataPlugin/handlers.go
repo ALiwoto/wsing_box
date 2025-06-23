@@ -7,6 +7,7 @@ import (
 	"github.com/sagernet/sing-box/common/dialer/baleDialing/balePlugins"
 	"github.com/sagernet/sing-box/common/dialer/baleDialing/gotgbot"
 	"github.com/sagernet/sing-box/common/dialer/baleDialing/gotgbot/ext"
+	"github.com/sagernet/sing-box/common/dialer/baleDialing/singingEncoding"
 	"github.com/sagernet/sing-box/log"
 )
 
@@ -62,6 +63,11 @@ func dataMessageHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 	}
 	connId := strings.Split(firstPart, "-")[1]
 	connPtr := balePlugins.BaleConnectionsPool.Get(connId)
+	decodedData, err := singingEncoding.StdEncoding.DecodeString(incomingData)
+	if err != nil {
+		log.Error("failed to decode data with signing encoding: ", err)
+		return ext.ContinueGroups
+	}
 
 	if isInsideBot {
 		if connPtr == nil {
@@ -70,7 +76,7 @@ func dataMessageHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 		}
 
 		conn := *connPtr
-		_, _ = conn.Write([]byte(incomingData))
+		_, _ = conn.Write(decodedData)
 	} else if isOutsideBot {
 		if connPtr == nil {
 			err := balePlugins.HandleNewBaleConn(connId)
@@ -87,7 +93,7 @@ func dataMessageHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 		}
 
 		conn := *connPtr
-		_, _ = conn.Write([]byte(incomingData))
+		_, _ = conn.Write(decodedData)
 	}
 
 	// don't let another handlers get executed
