@@ -74,8 +74,10 @@ func dataMessageHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 	} else if isOutsideBot {
 		if connPtr == nil {
 			err := balePlugins.HandleNewBaleConn(connId)
-			log.Error("dataMessageHandler: failed to handle new connection:", err)
-			return ext.EndGroups
+			if err != nil {
+				log.Error("dataMessageHandler: failed to handle new connection:", err)
+				return ext.EndGroups
+			}
 		}
 
 		connPtr = balePlugins.BaleConnectionsPool.Get(connId)
