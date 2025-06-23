@@ -5,6 +5,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/ALiwoto/ssg/ssg"
 	"github.com/sagernet/sing-box/common/dialer/baleDialing/gotgbot"
 	"github.com/sagernet/sing-box/common/dialer/baleDialing/gotgbot/ext"
 	"github.com/sagernet/sing-box/option"
@@ -32,7 +33,8 @@ type BaleBotPairsContainer struct {
 }
 
 type BaleDialerContainer struct {
-	Bots *BaleBotPairsContainer
+	Bots     *BaleBotPairsContainer
+	connPool *ssg.SafeMap[string, BaleConn]
 }
 
 //---------------------------------------------------------

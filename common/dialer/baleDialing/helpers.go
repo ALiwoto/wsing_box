@@ -4,6 +4,7 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/ALiwoto/ssg/ssg"
 	"github.com/sagernet/sing-box/common/dialer/baleDialing/gotgbot"
 	"github.com/sagernet/sing-box/common/dialer/baleDialing/gotgbot/ext"
 	"github.com/sagernet/sing-box/option"
@@ -13,7 +14,8 @@ import (
 
 func NewBaleDialerContainer(opts option.DialerOptions) (*BaleDialerContainer, error) {
 	dialerContainer := &BaleDialerContainer{
-		Bots: &BaleBotPairsContainer{},
+		Bots:     &BaleBotPairsContainer{},
+		connPool: ssg.NewSafeMap[string, BaleConn](),
 	}
 
 	allPairs := opts.BaleConfig.BotPairs

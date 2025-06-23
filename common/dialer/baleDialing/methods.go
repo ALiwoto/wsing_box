@@ -33,6 +33,12 @@ func (d *BaleDialerContainer) DialContext(
 		return nil, err
 	}
 
+	destStr := destination.String()
+	connCacheKey := network + "_" + destStr
+	if d.connPool.Exists(connCacheKey) {
+		return d.connPool.Get(connCacheKey), nil
+	}
+
 	connId := strings.ReplaceAll(connIdProvider.String(), "-", "")
 	baleConnectionsPool.Add(connId, &pipe2)
 	bConn := &BaleConn{
@@ -43,17 +49,19 @@ func (d *BaleDialerContainer) DialContext(
 		botsPool:     d.getInsideBots(),
 		Address: &BaleFakeAddr{
 			NetworkStr: destination.Network(),
-			AddressStr: destination.String(),
+			AddressStr: destStr,
 		},
 		isClosed: &atomic.Bool{},
 	}
+
+	d.connPool.Add(connCacheKey, bConn)
 
 	go bConn.bufferFlushWorker()
 	return bConn, nil
 }
 
 func (d *BaleDialerContainer) ListenPacket(ctx context.Context, destination M.Socksaddr) (net.PacketConn, error) {
-	return nil, nil
+	return nil, errors.New("BaleDialerContainer does not support UDP yet")
 }
 
 func (d *BaleDialerContainer) getInsideBots() []*BaleBotContainer {
