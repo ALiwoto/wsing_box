@@ -7,6 +7,7 @@ import (
 
 	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/adapter/inbound"
+	"github.com/sagernet/sing-box/common/dialer/baleDialing"
 	"github.com/sagernet/sing-box/common/listener"
 	"github.com/sagernet/sing-box/common/uot"
 	C "github.com/sagernet/sing-box/constant"
@@ -40,11 +41,21 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 		logger:        logger,
 		authenticator: auth.NewAuthenticator(options.Users),
 	}
+
+	networks := []string{
+		N.NetworkTCP,
+	}
+
+	if options.BaleConfig != nil {
+		networks = append(networks, baleDialing.NetworkBale)
+	}
+
 	inbound.listener = listener.New(listener.Options{
 		Context:           ctx,
 		Logger:            logger,
-		Network:           []string{N.NetworkTCP},
+		Network:           networks,
 		Listen:            options.ListenOptions,
+		BaleConfig:        options.BaleConfig,
 		ConnectionHandler: inbound,
 	})
 	return inbound, nil
@@ -62,7 +73,21 @@ func (h *Inbound) Close() error {
 }
 
 func (h *Inbound) NewConnectionEx(ctx context.Context, conn net.Conn, metadata adapter.InboundContext, onClose N.CloseHandlerFunc) {
-	err := socks.HandleConnectionEx(ctx, conn, std_bufio.NewReader(conn), h.authenticator, adapter.NewUpstreamHandlerEx(metadata, h.newUserConnection, h.streamUserPacketConnection), h.listener, metadata.Source, onClose)
+	upstreamHandler := adapter.NewUpstreamHandlerEx(
+		metadata,
+		h.newUserConnection,
+		h.streamUserPacketConnection,
+	)
+	err := socks.HandleConnectionEx(
+		ctx,
+		conn,
+		std_bufio.NewReader(conn),
+		h.authenticator,
+		upstreamHandler,
+		h.listener,
+		metadata.Source,
+		onClose,
+	)
 	N.CloseOnHandshakeFailure(conn, onClose, err)
 	if err != nil {
 		if E.IsClosedOrCanceled(err) {

@@ -2,6 +2,8 @@ package baleDialing
 
 import "time"
 
+const NetworkBale = "bale"
+
 const (
 	MaxGoRoutines = 50
 	// MaxCharLen    = 4030

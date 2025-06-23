@@ -9,6 +9,7 @@ import (
 	"sync/atomic"
 
 	"github.com/sagernet/sing-box/adapter"
+	"github.com/sagernet/sing-box/common/dialer/baleDialing"
 	"github.com/sagernet/sing-box/common/settings"
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing/common"
@@ -36,6 +37,7 @@ type Listener struct {
 	tcpListener          net.Listener
 	systemProxy          settings.SystemProxy
 	udpConn              *net.UDPConn
+	baleDialer           *baleDialing.BaleDialerContainer
 	udpAddr              M.Socksaddr
 	packetOutbound       chan *N.PacketBuffer
 	packetOutboundClosed chan struct{}
@@ -47,6 +49,7 @@ type Options struct {
 	Logger                   logger.ContextLogger
 	Network                  []string
 	Listen                   option.ListenOptions
+	BaleConfig               *option.BaleConfiguration
 	ConnectionHandler        adapter.ConnectionHandlerEx
 	PacketHandler            adapter.PacketHandlerEx
 	OOBPacketHandler         adapter.OOBPacketHandlerEx
@@ -75,6 +78,13 @@ func New(
 }
 
 func (l *Listener) Start() error {
+	if common.Contains(l.network, baleDialing.NetworkBale) {
+		err := l.ListenBale()
+		if err != nil {
+			return err
+		}
+	}
+
 	if common.Contains(l.network, N.NetworkTCP) {
 		_, err := l.ListenTCP()
 		if err != nil {

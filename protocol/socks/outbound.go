@@ -49,7 +49,7 @@ func NewOutbound(ctx context.Context, router adapter.Router, logger log.ContextL
 	}
 
 	var outboundDialer N.Dialer
-	if strings.HasPrefix(options.Username, "bale:") {
+	if strings.HasPrefix(options.Username, "bale:") && options.BaleConfig != nil {
 		outboundDialer, err = dialer.NewBaleDialer(ctx, options.DialerOptions, options.ServerIsDomain())
 	} else {
 		outboundDialer, err = dialer.New(ctx, options.DialerOptions, options.ServerIsDomain())

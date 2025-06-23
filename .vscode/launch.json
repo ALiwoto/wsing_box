@@ -11,7 +11,7 @@
             "mode": "auto",
             "args": [
                 "run",
-                "-c", "${workspaceFolder}/dist/config-socks-proxy.json"
+                "-c", "${workspaceFolder}/dist/config-outside.json"
             ],
             "program": "${workspaceFolder}/cmd/sing-box"
         }

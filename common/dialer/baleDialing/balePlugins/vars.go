@@ -12,3 +12,5 @@ var (
 )
 
 var BaleConnectionsPool = ssg.NewSafeMap[string, net.Conn]()
+
+var HandleNewBaleConn func(connId string) error

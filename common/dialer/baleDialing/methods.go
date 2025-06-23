@@ -28,7 +28,6 @@ func (d *BaleDialerContainer) DialContext(
 	network string,
 	destination M.Socksaddr,
 ) (net.Conn, error) {
-	pipe1, pipe2 := pipe.Pipe()
 	connIdProvider, err := uuid.NewV4()
 	if err != nil {
 		return nil, err
@@ -41,6 +40,26 @@ func (d *BaleDialerContainer) DialContext(
 	}
 
 	connId := strings.ReplaceAll(connIdProvider.String(), "-", "")
+	return d.CreateConnection(
+		ctx,
+		network,
+		&BaleFakeAddr{
+			NetworkStr: destination.Network(),
+			AddressStr: destStr,
+		},
+		connId,
+		connCacheKey,
+	)
+}
+
+func (d *BaleDialerContainer) CreateConnection(
+	ctx context.Context,
+	network string,
+	addr *BaleFakeAddr,
+	connId string,
+	connCacheKey string,
+) (net.Conn, error) {
+	pipe1, pipe2 := pipe.Pipe()
 	balePlugins.BaleConnectionsPool.Add(connId, &pipe2)
 	bConn := &BaleConn{
 		pipe:         pipe1,
@@ -48,16 +67,15 @@ func (d *BaleDialerContainer) DialContext(
 		readLock:     &sync.Mutex{},
 		ConnectionId: connId,
 		botsPool:     d.getSuitableBots(),
-		Address: &BaleFakeAddr{
-			NetworkStr: destination.Network(),
-			AddressStr: destStr,
-		},
-		isClosed:  &atomic.Bool{},
-		IsInside:  d.IsInside,
-		IsOutside: d.IsOutside,
+		Address:      addr,
+		isClosed:     &atomic.Bool{},
+		IsInside:     d.IsInside,
+		IsOutside:    d.IsOutside,
 	}
 
-	d.connPool.Add(connCacheKey, bConn)
+	if connCacheKey != "" {
+		d.connPool.Add(connCacheKey, bConn)
+	}
 
 	go bConn.bufferFlushWorker()
 	return bConn, nil
@@ -194,6 +212,10 @@ func (c *BaleConn) Close() error {
 		return nil
 	}
 
+	c.isClosed.Store(true)
+	c.writeLock.Lock()
+	defer c.writeLock.Unlock()
+
 	preCmd := ""
 	if c.IsInside {
 		preCmd = balePlugins.InsidePreCommand
@@ -207,7 +229,6 @@ func (c *BaleConn) Close() error {
 	if err != nil {
 		return err
 	}
-	c.isClosed.Store(true)
 	return c.pipe.Close()
 }
 

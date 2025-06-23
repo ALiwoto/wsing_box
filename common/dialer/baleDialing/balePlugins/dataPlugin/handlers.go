@@ -39,7 +39,10 @@ func dataMessageHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 	}
 	processedMessages.Set(messageKey, true)
 
-	_, _ = bot.DeleteMessage(chat.Id, message.MessageId, nil)
+	_, err := bot.DeleteMessage(chat.Id, message.MessageId, nil)
+	if err != nil {
+		log.Error("dataMessageHandler: failed to delete message:", err)
+	}
 
 	// process rest of the messages here...
 	// The format of data is:
@@ -52,9 +55,9 @@ func dataMessageHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 		return ext.ContinueGroups
 	}
 	connId := strings.Split(firstPart, "-")[1]
+	connPtr := balePlugins.BaleConnectionsPool.Get(connId)
 
 	if isInsideBot {
-		connPtr := balePlugins.BaleConnectionsPool.Get(connId)
 		if connPtr == nil {
 			log.Error("non-existing connections are not handled yet...")
 			return ext.ContinueGroups
@@ -63,8 +66,20 @@ func dataMessageHandler(bot *gotgbot.Bot, ctx *ext.Context) error {
 		conn := *connPtr
 		_, _ = conn.Write([]byte(incomingData))
 	} else if isOutsideBot {
-		// not handled yet... do something here I guess
-		log.Error("not handled yet...")
+		if connPtr == nil {
+			err := balePlugins.HandleNewBaleConn(connId)
+			log.Error("dataMessageHandler: failed to handle new connection:", err)
+			return ext.EndGroups
+		}
+
+		connPtr = balePlugins.BaleConnectionsPool.Get(connId)
+		if connPtr == nil {
+			log.Error("the new incoming connection with id '" + connId + "' is not added to the pool yet")
+			return ext.EndGroups
+		}
+
+		conn := *connPtr
+		_, _ = conn.Write([]byte(incomingData))
 	}
 
 	// don't let another handlers get executed
