@@ -33,13 +33,17 @@ type BaleBotPairsContainer struct {
 }
 
 type BaleDialerContainer struct {
-	Bots     *BaleBotPairsContainer
-	connPool *ssg.SafeMap[string, BaleConn]
+	Bots      *BaleBotPairsContainer
+	connPool  *ssg.SafeMap[string, BaleConn]
+	IsInside  bool
+	IsOutside bool
 }
 
 //---------------------------------------------------------
 
 type BaleConn struct {
+	IsInside     bool
+	IsOutside    bool
 	ConnectionId string
 	Address      *BaleFakeAddr
 	pipe         net.Conn

@@ -54,6 +54,7 @@ type InboundOptions struct {
 	SniffOverrideDestination  bool               `json:"sniff_override_destination,omitempty"`
 	SniffTimeout              badoption.Duration `json:"sniff_timeout,omitempty"`
 	DomainStrategy            DomainStrategy     `json:"domain_strategy,omitempty"`
+	BaleConfig                *BaleConfiguration `json:"bale_config,omitempty"`
 	UDPDisableDomainUnmapping bool               `json:"udp_disable_domain_unmapping,omitempty"`
 	Detour                    string             `json:"detour,omitempty"`
 }

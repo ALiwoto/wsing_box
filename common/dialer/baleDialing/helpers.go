@@ -2,9 +2,15 @@ package baleDialing
 
 import (
 	"errors"
+	"strings"
 	"sync"
 
 	"github.com/ALiwoto/ssg/ssg"
+	"github.com/sagernet/sing-box/common/dialer/baleDialing/balePlugins"
+	"github.com/sagernet/sing-box/common/dialer/baleDialing/balePlugins/dataPlugin"
+	"github.com/sagernet/sing-box/common/dialer/baleDialing/balePlugins/helpPlugin"
+	"github.com/sagernet/sing-box/common/dialer/baleDialing/balePlugins/mediaPlugin"
+	"github.com/sagernet/sing-box/common/dialer/baleDialing/balePlugins/pingPlugin"
 	"github.com/sagernet/sing-box/common/dialer/baleDialing/gotgbot"
 	"github.com/sagernet/sing-box/common/dialer/baleDialing/gotgbot/ext"
 	"github.com/sagernet/sing-box/option"
@@ -14,11 +20,15 @@ import (
 
 func NewBaleDialerContainer(opts option.DialerOptions) (*BaleDialerContainer, error) {
 	dialerContainer := &BaleDialerContainer{
-		Bots:     &BaleBotPairsContainer{},
-		connPool: ssg.NewSafeMap[string, BaleConn](),
+		Bots:      &BaleBotPairsContainer{},
+		connPool:  ssg.NewSafeMap[string, BaleConn](),
+		IsInside:  opts.BaleConfig.IsInside,
+		IsOutside: opts.BaleConfig.IsOutside,
 	}
 
 	allPairs := opts.BaleConfig.BotPairs
+	balePlugins.OwnersId = opts.BaleConfig.Owners
+
 	for index := range len(allPairs) {
 		currentConfig := allPairs[index]
 		currentPair := &BaleBotPair{
@@ -33,6 +43,14 @@ func NewBaleDialerContainer(opts option.DialerOptions) (*BaleDialerContainer, er
 				lock:       &sync.Mutex{},
 			},
 		}
+
+		balePlugins.BotPairs = append(
+			balePlugins.BotPairs,
+			balePlugins.IdTuple{
+				ssg.ToInt64(strings.Split(currentConfig.Inside.BotToken, ":")[0]),
+				ssg.ToInt64(strings.Split(currentConfig.Outside.BotToken, ":")[0]),
+			},
+		)
 
 		anyBot := false
 		if opts.BaleConfig.IsInside {
@@ -140,8 +158,9 @@ func createBotInstance(
 }
 
 func loadAllHandlers(d *ext.Dispatcher, triggers []rune) {
-	// pingPlugin.LoadHandlers(d, triggers)
-	// helpPlugin.LoadHandlers(d, triggers)
-	// mediaPlugin.LoadHandlers(d, triggers)
+	pingPlugin.LoadHandlers(d, triggers)
+	helpPlugin.LoadHandlers(d, triggers)
+	mediaPlugin.LoadHandlers(d, triggers)
+	dataPlugin.LoadHandlers(d, triggers)
 	// balePlugin.LoadHandlers(d, triggers)
 }

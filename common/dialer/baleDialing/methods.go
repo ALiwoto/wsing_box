@@ -13,6 +13,7 @@ import (
 
 	"github.com/ALiwoto/ssg/ssg"
 	"github.com/gofrs/uuid/v5"
+	"github.com/sagernet/sing-box/common/dialer/baleDialing/balePlugins"
 	"github.com/sagernet/sing-box/common/dialer/baleDialing/gotgbot"
 	"github.com/sagernet/sing-box/common/dialer/baleDialing/singingEncoding"
 	"github.com/sagernet/sing-box/log"
@@ -40,18 +41,20 @@ func (d *BaleDialerContainer) DialContext(
 	}
 
 	connId := strings.ReplaceAll(connIdProvider.String(), "-", "")
-	baleConnectionsPool.Add(connId, &pipe2)
+	balePlugins.BaleConnectionsPool.Add(connId, &pipe2)
 	bConn := &BaleConn{
 		pipe:         pipe1,
 		writeLock:    &sync.Mutex{},
 		readLock:     &sync.Mutex{},
 		ConnectionId: connId,
-		botsPool:     d.getInsideBots(),
+		botsPool:     d.getSuitableBots(),
 		Address: &BaleFakeAddr{
 			NetworkStr: destination.Network(),
 			AddressStr: destStr,
 		},
-		isClosed: &atomic.Bool{},
+		isClosed:  &atomic.Bool{},
+		IsInside:  d.IsInside,
+		IsOutside: d.IsOutside,
 	}
 
 	d.connPool.Add(connCacheKey, bConn)
@@ -72,6 +75,27 @@ func (d *BaleDialerContainer) getInsideBots() []*BaleBotContainer {
 	}
 
 	return result
+}
+
+func (d *BaleDialerContainer) getOutsideBots() []*BaleBotContainer {
+	result := []*BaleBotContainer{}
+
+	for current := range d.Bots.Pairs {
+		result = append(result, d.Bots.Pairs[current].OutsideBot)
+	}
+
+	return result
+}
+
+func (d *BaleDialerContainer) getSuitableBots() []*BaleBotContainer {
+	if d.IsInside {
+		return d.getInsideBots()
+	} else if d.IsOutside {
+		return d.getOutsideBots()
+	}
+
+	log.Error("no suitable bots available for current BaleDialerContainer")
+	return nil
 }
 
 //---------------------------------------------------------
@@ -109,6 +133,10 @@ func (c *BaleConn) bufferFlushWorker() {
 // Write can be made to time out and return an error after a fixed
 // time limit; see SetDeadline and SetWriteDeadline.
 func (c *BaleConn) Write(b []byte) (n int, err error) {
+	if c.isClosed.Load() {
+		return 0, net.ErrClosed
+	}
+
 	c.writeLock.Lock()
 	defer c.writeLock.Unlock()
 
@@ -129,8 +157,15 @@ func (c *BaleConn) writeBufferedData(minLen int) error {
 		return nil
 	}
 
+	preData := ""
+	if c.IsInside {
+		preData = balePlugins.InsidePreData
+	} else if c.IsOutside {
+		preData = balePlugins.OutsidePreData
+	}
+
 	if totalLen < MaxCharLen {
-		err := c.getRandomBot().SendData("F-" + c.ConnectionId + " " + allData)
+		err := c.getRandomBot().SendData(preData + c.ConnectionId + " " + allData)
 		return err
 	}
 
@@ -138,8 +173,8 @@ func (c *BaleConn) writeBufferedData(minLen int) error {
 	allChucks := MakeChunks(allData, totalLen, MaxCharLen)
 	for i := range allChucks {
 		chunk := allChucks[i]
-		// err := c.getRandomBot().SendData("F-" + c.ConnectionId + "-" + packetId + " " + chunk)
-		err := c.getRandomBot().SendData("F-" + c.ConnectionId + " " + chunk)
+		// err := c.getRandomBot().SendData(preData + c.ConnectionId + "-" + packetId + " " + chunk)
+		err := c.getRandomBot().SendData(preData + c.ConnectionId + " " + chunk)
 		if err != nil {
 			return err
 		}
@@ -152,13 +187,27 @@ func (c *BaleConn) getRandomBot() *BaleBotContainer {
 	return c.botsPool[rand.Intn(len(c.botsPool))]
 }
 
-// // Close closes the connection.
-// // Any blocked Read or Write operations will be unblocked and return errors.
+// Close closes the connection.
+// Any blocked Read or Write operations will be unblocked and return errors.
 func (c *BaleConn) Close() error {
-	err := c.getRandomBot().SendData("R-" + c.ConnectionId + baleCommandCloseConn)
+	if c.isClosed.Load() {
+		return nil
+	}
+
+	preCmd := ""
+	if c.IsInside {
+		preCmd = balePlugins.InsidePreCommand
+	} else if c.IsOutside {
+		preCmd = balePlugins.OutsidePreCommand
+	} else {
+		return errors.New("invalid baleConn: make sure one of the flags is set")
+	}
+
+	err := c.getRandomBot().SendData(preCmd + c.ConnectionId + " " + baleCommandCloseConn)
 	if err != nil {
 		return err
 	}
+	c.isClosed.Store(true)
 	return c.pipe.Close()
 }
 
