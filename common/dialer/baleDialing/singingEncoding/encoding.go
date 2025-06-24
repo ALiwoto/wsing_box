@@ -3,6 +3,7 @@ package singingEncoding
 import (
 	"bytes"
 	"compress/gzip"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"math/big"
@@ -90,6 +91,20 @@ var StdEncoding = NewEncoding(singingChars)
 
 // EncodeToString returns the singing encoding of src.
 func (enc *SingingEncoding) EncodeToString(src []byte) string {
+	var buf bytes.Buffer
+	gw := gzip.NewWriter(&buf)
+	if _, err := gw.Write(src); err != nil {
+		// Handle error - in practice you might want to return an error instead
+		return ""
+	}
+	if err := gw.Close(); err != nil {
+		// Handle error
+		return ""
+	}
+	return base64.StdEncoding.EncodeToString(buf.Bytes())
+}
+
+func (enc *SingingEncoding) EncodeToStringOld(src []byte) string {
 	if len(src) == 0 {
 		return ""
 	}
@@ -131,6 +146,26 @@ func (enc *SingingEncoding) EncodeToString(src []byte) string {
 
 // DecodeString returns the bytes represented by the singing encoded string s.
 func (enc *SingingEncoding) DecodeString(s string) ([]byte, error) {
+	compressed, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		return nil, err
+	}
+
+	gr, err := gzip.NewReader(bytes.NewReader(compressed))
+	if err != nil {
+		return nil, err
+	}
+	defer gr.Close()
+
+	decompressed, err := io.ReadAll(gr)
+	if err != nil {
+		return nil, err
+	}
+
+	return decompressed, nil
+}
+
+func (enc *SingingEncoding) DecodeStringOld(s string) ([]byte, error) {
 	if len(s) == 0 {
 		return []byte{}, nil
 	}
@@ -157,7 +192,10 @@ func (enc *SingingEncoding) DecodeString(s string) ([]byte, error) {
 
 	// gzip algorithm
 	buff := bytes.NewBuffer(num.Bytes())
-	reader, _ := gzip.NewReader(buff)
+	reader, err := gzip.NewReader(buff)
+	if err != nil {
+		return nil, err
+	}
 
 	return io.ReadAll(reader)
 
